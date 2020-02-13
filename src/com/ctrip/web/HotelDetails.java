@@ -1,5 +1,7 @@
 package com.ctrip.web;
 
+import static org.testng.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ public class HotelDetails {
 
 	@BeforeTest
 	public void beforeTest() throws IOException {
+		System.out.println("Open the ctrip website");
 		test = new HotelDetails();
 		Runtime.getRuntime().exec("taskkill /F /im " + "chromedriver.exe");
 		Runtime.getRuntime().exec("taskkill /F /im " + "chrome.exe");
@@ -43,11 +46,13 @@ public class HotelDetails {
 
 	@AfterTest
 	public void afterTest() {
+		System.out.println("Execution completed, close the broswer");
 		driver.quit();
 	}
 
 	@Test
 	public void test() throws Exception {
+		System.out.println("Seach the hotels with keywords");
 		searchWithKeywords();
 		try {
 			Thread.sleep(3000);
@@ -55,20 +60,19 @@ public class HotelDetails {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		System.out.println(
+				"Find the hotel with the lowest price in the top five search results and click 'View details'");
 		getLowestHotel();
+
 		try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println("Verify that the total price of the default item is correct on the default page");
+		compareToTotalPrice();
 
-		if (compareToTotalPrice()) {
-			System.out.println("The price is as expected, pass!");
-		} else {
-			System.out.println("The price is not as expected, fail!");
-		}
 	}
 
 	private boolean isElementLoaded(WebElement element, WebDriver driver) throws Exception {
@@ -81,13 +85,13 @@ public class HotelDetails {
 			return false;
 		}
 	}
-
 	
-	 private void loginToSystem(WebDriver driver) throws Exception { HotelDetails
+	private void loginToSystem(WebDriver driver) throws Exception {
+		HotelDetails
 		test = new HotelDetails();
 		if (test.isElementLoaded(driver.findElement(By.cssSelector("li#nav-bar-set-login a")), driver)) {
-	    driver.findElement(By.cssSelector("li#nav-bar-set-login a")).click();
-	    driver.findElement(By.id("nloginname")).sendKeys("18061515431");
+			driver.findElement(By.cssSelector("li#nav-bar-set-login a")).click();
+			driver.findElement(By.id("nloginname")).sendKeys("18061515431");
 			driver.findElement(By.id("npwd")).sendKeys("passw0rd");
 			if (test.isElementLoaded(driver.findElement(By.className("cpt-drop-btn")), driver)) {
 				test.mouseHoverDragandDrop(driver, driver.findElement(By.className("cpt-drop-btn")));
@@ -116,6 +120,7 @@ public class HotelDetails {
 		if (test.isElementLoaded(driver.findElement(By.className("website_pop_close")), driver)) {
 			driver.findElement(By.className("website_pop_close")).click();
 		}
+		// login
 		test.loginToSystem(driver);
 		try {
 			Thread.sleep(1000);
@@ -187,9 +192,8 @@ public class HotelDetails {
 		}
 	}
 
-	private boolean compareToTotalPrice() throws Exception {
-		boolean isConsitent = false;
-		((JavascriptExecutor) driver).executeScript("document.documentElement.scrollTop=110");
+	private void compareToTotalPrice() throws Exception {
+		((JavascriptExecutor) driver).executeScript("document.documentElement.scrollTop=160");
 		if (test.isElementLoaded(driver.findElement(By.className("btns_base22_main")), driver)) {
 			try {
 				Thread.sleep(5000);
@@ -199,7 +203,7 @@ public class HotelDetails {
 			}
 			driver.findElement(By.className("btns_base22_main")).click();
 
-			((JavascriptExecutor) driver).executeScript("document.documentElement.scrollTop=90");
+			((JavascriptExecutor) driver).executeScript("document.documentElement.scrollTop=150");
 
 			List<WebElement> prices = driver.findElements(By.cssSelector("span.orange"));
 			String priceDay1 = prices.get(0).getText();
@@ -216,14 +220,11 @@ public class HotelDetails {
 			}
 			String totalPrice = driver.findElement(By.className("htotal_price_num")).getText();
 			int totalPriceInt = Integer.parseInt(totalPrice);
-			System.out.println("The total price is: " + totalPriceInt);
+			System.out.println("The total price in the order is: " + totalPriceInt);
 			int expectedTotal = priceInt * 2 + discountSum;
 			System.out.println(
-					"The expected price is: " + expectedTotal + "(Total Room Cost - Discount + Cash Pledag if have)");
-			if (expectedTotal == totalPriceInt) {
-				isConsitent = true;
-			}
+					"The expected price is: " + expectedTotal + " (2 Rooms Cost - Discount + Cash Pledag if have)");
+			assertEquals(totalPriceInt, expectedTotal);
 		}
-		return isConsitent;
 	}
 }
